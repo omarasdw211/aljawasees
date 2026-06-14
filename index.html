@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <title>الجواسيس — الحلفاء ضد الجواسيس</title>
 <style>
   :root{
@@ -126,6 +127,14 @@
   .warn{ color:var(--stamp); min-height:1.4rem; font-size:.9rem; }
   .team-names{ font-size:1.2rem; }
   .vote-count{ font-size:1rem; }
+  /* ===== متعدد الأجهزة ===== */
+  .btn-blue{ background:#1A73E8; color:#fff; font-family:"Lalezar","Tajawal",sans-serif; font-size:1.4rem; }
+  .btn-blue:hover{ filter:brightness(1.12); }
+  #m-room-code-big{ font-size:3rem; letter-spacing:.6rem; font-family:"Lalezar","Tajawal",sans-serif; color:var(--gold); }
+  .m-name-list{ list-style:none; display:grid; gap:.4rem; margin-bottom:.5rem; }
+  .m-name-list li{ background:var(--ink2); border-radius:10px; padding:.5rem 1rem; font-size:.95rem; }
+  .m-vote-col{ background:var(--ink2); border-radius:10px; padding:.75rem 1rem; text-align:right; }
+  .m-vote-col h4{ margin-bottom:.4rem; font-size:.9rem; }
 </style>
 </head>
 <body>
@@ -139,6 +148,7 @@
     <p class="muted mb-5">جواسيس متخفّون بينكم يحاولون إفشال مهماتكم من الداخل. من يربح ٣ مهمات من ٥ ينتصر. لعبة على جهاز واحد بنظام «مرّر الهاتف».</p>
     <div class="stack">
       <button class="btn btn-red" data-go="screen-setup">ابدأ اللعب</button>
+      <button class="btn btn-blue" data-go="screen-m-home">📱 لعب على عدة أجهزة</button>
       <button class="btn btn-ghost" data-go="screen-howto">كيف تلعب؟ (الشرح الكامل)</button>
     </div>
   </section>
@@ -346,6 +356,198 @@
       <button id="rematch-btn" class="btn btn-red">لعبة جديدة (نفس اللاعبين) 🔁</button>
       <button class="btn btn-ghost" data-go="screen-setup">تعديل اللاعبين</button>
     </div>
+  </section>
+
+  <!-- ===================== متعدد — الرئيسية ===================== -->
+  <section id="screen-m-home" class="screen center">
+    <button class="btn-back" data-go="screen-home">→ رجوع</button>
+    <h2 class="display mb-2">لعب على عدة أجهزة 📱</h2>
+    <p class="muted mb-4">كل لاعب يتحكم من جواله. المضيف ينشئ الجلسة والباقون ينضمون برمز الجلسة.</p>
+    <div class="stack">
+      <button class="btn btn-red" id="m-create-btn">أنشئ جلسة — أنت المضيف</button>
+      <button class="btn btn-ghost" data-go="screen-m-join">انضم لجلسة موجودة</button>
+    </div>
+  </section>
+
+  <!-- ===================== متعدد — إنشاء الجلسة ===================== -->
+  <section id="screen-m-create" class="screen center">
+    <button class="btn-back" data-go="screen-m-home">→ رجوع</button>
+    <h2 class="display mb-3">اسمك أنت؟</h2>
+    <div class="input-row mb-2">
+      <input id="m-host-name-input" type="text" maxlength="20" placeholder="اسمك…">
+      <button id="m-host-create-btn" class="btn-gold display">إنشاء</button>
+    </div>
+    <p id="m-create-status" class="warn"></p>
+  </section>
+
+  <!-- ===================== متعدد — لوبي المضيف ===================== -->
+  <section id="screen-m-lobby" class="screen center">
+    <h2 class="display mb-1">انتظار اللاعبين</h2>
+    <p class="small muted mb-1">شارك الرمز مع أصدقائك:</p>
+    <div id="m-room-code-big" class="mb-3"></div>
+    <ul id="m-waiting-list" class="m-name-list"></ul>
+    <p id="m-lobby-hint" class="small muted mb-4"></p>
+    <button id="m-start-multi-btn" class="btn btn-red" disabled>ابدأ اللعبة 🕵️</button>
+  </section>
+
+  <!-- ===================== متعدد — الانضمام ===================== -->
+  <section id="screen-m-join" class="screen center">
+    <button class="btn-back" data-go="screen-m-home">→ رجوع</button>
+    <h2 class="display mb-3">انضم لجلسة</h2>
+    <div class="input-row mb-2">
+      <input id="m-join-name-input" type="text" maxlength="20" placeholder="اسمك…">
+    </div>
+    <div class="input-row mb-3">
+      <input id="m-join-code-input" type="text" maxlength="5" placeholder="رمز الجلسة…" style="letter-spacing:4px;text-transform:uppercase;font-size:1.3rem">
+      <button id="m-join-submit-btn" class="btn-gold display">انضم</button>
+    </div>
+    <p id="m-join-status" class="warn"></p>
+  </section>
+
+  <!-- ===================== متعدد — لوبي العميل ===================== -->
+  <section id="screen-m-client-lobby" class="screen center">
+    <h2 class="display mb-1">جلسة: <span id="m-client-code" class="gold"></span></h2>
+    <p class="small muted mb-2">في انتظار المضيف لبدء اللعبة…</p>
+    <ul id="m-client-lobby-list" class="m-name-list mb-2"></ul>
+    <p id="m-client-lobby-hint" class="small muted"></p>
+  </section>
+
+  <!-- ===================== متعدد — الدور السري ===================== -->
+  <section id="screen-m-role" class="screen center">
+    <p class="small muted mb-2" id="m-role-greeting"></p>
+    <div class="dossier mb-4">
+      <div class="stamp mb-2">سري للغاية</div>
+      <p id="m-role-value" class="display role-value"></p>
+      <p id="m-role-extra" class="mb-1" style="font-size:1.1rem"></p>
+      <p id="m-role-tip" class="small" style="opacity:.8;margin-top:.6rem"></p>
+    </div>
+    <button id="m-role-ready-btn" class="btn btn-ghost display" style="padding:1.1rem;font-size:1.4rem">فهمت دوري ✓</button>
+  </section>
+
+  <!-- ===================== متعدد — انتظار (عام) ===================== -->
+  <section id="screen-m-wait" class="screen center">
+    <div style="font-size:3rem;margin-bottom:1.5rem">⏳</div>
+    <h2 class="display mb-2" id="m-wait-title">انتظر…</h2>
+    <p class="muted" id="m-wait-sub"></p>
+  </section>
+
+  <!-- ===================== متعدد — لوحة المهمات ===================== -->
+  <section id="screen-m-board" class="screen center">
+    <h2 class="display mb-2">سجل المهمات</h2>
+    <div class="missions" id="m-missions-track"></div>
+    <div class="mission-sizes" id="m-missions-sizes"></div>
+    <div class="chip mb-3" style="margin-top:1.5rem;text-align:right">
+      <p>👑 القائد: <b id="m-board-leader" class="gold"></b></p>
+      <p>🎯 المهمة <b id="m-board-mission-num"></b> تحتاج <b id="m-board-team-size" class="gold"></b></p>
+      <p id="m-board-two-fails" class="small red hidden">⚠ هذه المهمة تحتاج بطاقتي فشل!</p>
+      <p class="small muted">ترشيحات مرفوضة: <b id="m-board-rejections" class="red"></b> من ٥</p>
+    </div>
+    <button id="m-propose-btn" class="btn btn-red hidden" style="padding:1rem">اختر فريق المهمة 👥</button>
+    <p id="m-board-waiting" class="muted hidden">القائد يختار الفريق الآن…</p>
+  </section>
+
+  <!-- ===================== متعدد — ترشيح الفريق ===================== -->
+  <section id="screen-m-propose" class="screen">
+    <h2 class="display center mb-1">اختر الفريق</h2>
+    <p class="center muted mb-3">اختر <b id="m-propose-size" class="gold"></b> للمهمة:</p>
+    <div id="m-propose-list" class="stack mb-2"></div>
+    <p id="m-propose-count" class="center small muted mb-3"></p>
+    <button id="m-confirm-team-btn" class="btn btn-gold display" disabled style="padding:1rem">عرض الترشيح للتصويت 🗳️</button>
+  </section>
+
+  <!-- ===================== متعدد — التصويت ===================== -->
+  <section id="screen-m-vote" class="screen center">
+    <h2 class="display mb-2">التصويت</h2>
+    <div class="chip mb-3">
+      <p class="small muted mb-1">الفريق المرشَّح:</p>
+      <p id="m-vote-team" class="team-names gold display"></p>
+    </div>
+    <div id="m-vote-btns">
+      <p class="muted mb-3">صوّت الآن:</p>
+      <div class="grid2">
+        <button id="m-vote-yes-btn" class="btn btn-green" style="padding:1.2rem">👍 أوافق</button>
+        <button id="m-vote-no-btn" class="btn btn-red" style="padding:1.2rem">👎 أرفض</button>
+      </div>
+    </div>
+    <div id="m-vote-submitted" class="hidden" style="margin-top:1rem">
+      <p class="green mb-1">✓ تم تسجيل صوتك</p>
+      <p class="muted small" id="m-vote-waiting-count">في انتظار الآخرين…</p>
+    </div>
+  </section>
+
+  <!-- ===================== متعدد — نتيجة التصويت ===================== -->
+  <section id="screen-m-vote-result" class="screen center">
+    <h2 class="display mb-3" id="m-vr-title"></h2>
+    <div class="grid2 mb-3">
+      <div class="m-vote-col">
+        <h4 class="green">👍 وافق</h4>
+        <div id="m-vr-yes" class="small"></div>
+      </div>
+      <div class="m-vote-col">
+        <h4 class="red">👎 رفض</h4>
+        <div id="m-vr-no" class="small"></div>
+      </div>
+    </div>
+    <p id="m-vr-warn" class="warn mb-3"></p>
+    <button id="m-vr-continue-btn" class="btn btn-gold display hidden" style="padding:1rem">متابعة ←</button>
+    <p id="m-vr-waiting" class="muted small hidden">في انتظار المضيف…</p>
+  </section>
+
+  <!-- ===================== متعدد — تنفيذ المهمة ===================== -->
+  <section id="screen-m-mission" class="screen center">
+    <p class="small muted mb-3">تنفيذ المهمة <span id="m-mission-num"></span></p>
+    <div id="m-mission-member-area" class="hidden">
+      <p class="muted mb-3">اختر بطاقتك سراً:</p>
+      <div class="grid2 mb-2">
+        <button id="m-card-success-btn" class="btn btn-green" style="padding:1.4rem 1rem">نجاح ✔</button>
+        <button id="m-card-fail-btn" class="btn btn-red" style="padding:1.4rem 1rem">فشل ✘</button>
+      </div>
+      <p id="m-card-warn" class="warn"></p>
+    </div>
+    <div id="m-mission-submitted" class="hidden">
+      <div class="chip mb-3"><p style="font-size:1.3rem">✅ تم تسجيل بطاقتك</p></div>
+      <p class="small muted">انتظر باقي أعضاء الفريق…</p>
+    </div>
+    <div id="m-mission-spectator" class="hidden">
+      <div style="font-size:3rem;margin-bottom:1rem">👀</div>
+      <p class="muted mb-1">أنت لستَ في هذه المهمة.</p>
+      <p class="small muted">ترقّب النتيجة…</p>
+    </div>
+  </section>
+
+  <!-- ===================== متعدد — نتيجة المهمة ===================== -->
+  <section id="screen-m-result" class="screen center">
+    <h2 class="display mb-3">نتيجة المهمة <span id="m-result-num"></span></h2>
+    <div class="dossier mb-3">
+      <div class="stamp mb-3" id="m-result-stamp"></div>
+      <p id="m-result-outcome" class="display role-value mb-2"></p>
+      <p class="vote-count">بطاقات النجاح: <b id="m-count-success"></b> &nbsp;|&nbsp; بطاقات الفشل: <b id="m-count-fail"></b></p>
+    </div>
+    <p class="small muted mb-4">ناقشوا: من تتهمون؟ 🤔</p>
+    <button id="m-result-continue-btn" class="btn btn-gold display hidden" style="padding:1rem">متابعة ←</button>
+    <p id="m-result-waiting" class="muted small hidden">في انتظار المضيف…</p>
+  </section>
+
+  <!-- ===================== متعدد — نهاية اللعبة ===================== -->
+  <section id="screen-m-gameover" class="screen center">
+    <h2 class="display mb-3">انتهت العملية!</h2>
+    <div class="dossier mb-4">
+      <div class="stamp mb-3">تم رفع السرية</div>
+      <p id="m-winner-text" class="display role-value mb-2"></p>
+      <p id="m-winner-reason" class="small mb-2" style="opacity:.8"></p>
+      <p class="small" style="opacity:.7">الجواسيس كانوا:</p>
+      <p id="m-spies-reveal" class="display" style="font-size:1.7rem;color:var(--stamp)"></p>
+    </div>
+    <button id="m-rematch-btn" class="btn btn-red hidden">لعبة جديدة (نفس اللاعبين) 🔁</button>
+    <p id="m-rematch-waiting" class="muted small hidden">في انتظار المضيف للعبة جديدة…</p>
+  </section>
+
+  <!-- ===================== متعدد — خطأ اتصال ===================== -->
+  <section id="screen-m-error" class="screen center">
+    <div style="font-size:3rem;margin-bottom:1rem">⚠️</div>
+    <h2 class="display mb-2">مشكلة في الاتصال</h2>
+    <p id="m-error-msg" class="muted mb-4"></p>
+    <button class="btn btn-ghost" id="m-error-home-btn">العودة للرئيسية</button>
   </section>
 
 </main>
@@ -724,6 +926,560 @@ $("player-input").addEventListener("keydown", function(e){
 });
 
 renderPlayers();
+</script>
+
+<script>
+/* ============================================================
+   وضع متعدد الأجهزة — منفصل تماماً عن لعبة الجهاز الواحد
+   ============================================================ */
+
+/* ---------- متغيرات الحالة ---------- */
+var mIsHost      = false;
+var mMyName      = "";
+var mMyRole      = null;   // 'spy' | 'ally'
+var mMySpyMates  = [];
+var mInMission   = false;
+var mVoteSent    = false;
+var mCardSent    = false;
+var mVoteMap     = {};     // host only: {name: bool}
+var mCardMap     = {};     // host only: {name: bool}
+var mVoteResult  = null;   // {approved, yesNames, noNames}
+var mPeer        = null;
+var mConns       = [];     // host only: [{conn, name}]
+var mHostConn    = null;   // client only
+
+/* ---------- أدوات ---------- */
+function mEl(id){ return document.getElementById(id); }
+
+function mGenCode(){
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', r='';
+  for(var i=0;i<5;i++) r+=c[Math.floor(cryptoRand()*c.length)];
+  return r;
+}
+
+function mBroadcast(data){
+  for(var i=0;i<mConns.length;i++){
+    try{ mConns[i].conn.send(data); }catch(e){}
+  }
+}
+
+function mSend(data){
+  try{ if(mHostConn) mHostConn.send(data); }catch(e){}
+}
+
+function mShowError(msg){
+  mEl('m-error-msg').textContent = msg;
+  go('screen-m-error');
+}
+
+function mCleanup(){
+  try{ if(mPeer) mPeer.destroy(); }catch(e){}
+  mPeer=null; mConns=[]; mHostConn=null;
+  mIsHost=false; mMyName=''; mMyRole=null;
+}
+
+/* ---------- إنشاء الجلسة (المضيف) ---------- */
+function mCreateRoom(){
+  var name = mEl('m-host-name-input').value.trim();
+  if(!name){ mEl('m-create-status').textContent='أدخل اسمك أولاً'; return; }
+  mMyName = name;
+  mIsHost = true;
+  mEl('m-create-status').textContent='جاري الإنشاء…';
+
+  var code = mGenCode();
+  mPeer = new Peer('jws-'+code, {host:'0.peerjs.com',port:443,path:'/',secure:true});
+
+  mPeer.on('open', function(){
+    players = [mMyName];
+    mConns  = [];
+    mEl('m-room-code-big').textContent = code;
+    mRenderLobbyHost();
+    go('screen-m-lobby');
+  });
+
+  mPeer.on('connection', function(conn){
+    conn.on('open', function(){
+      conn.on('data', function(d){ mHandleClientMsg(conn, d); });
+      conn.on('close', function(){ mHandleDisconnect(conn); });
+    });
+  });
+
+  mPeer.on('error', function(err){
+    if(err.type==='unavailable-id'){
+      mPeer.destroy();
+      mCreateRoom();
+    } else {
+      mEl('m-create-status').textContent='خطأ: '+err.type;
+    }
+  });
+}
+
+/* ---------- الانضمام (العميل) ---------- */
+function mJoinRoom(){
+  var name = mEl('m-join-name-input').value.trim();
+  var code = mEl('m-join-code-input').value.trim().toUpperCase();
+  if(!name || !code){ mEl('m-join-status').textContent='أدخل اسمك ورمز الجلسة'; return; }
+  mMyName = name;
+  mEl('m-join-status').textContent='جاري الاتصال…';
+
+  mPeer = new Peer(undefined, {host:'0.peerjs.com',port:443,path:'/',secure:true});
+
+  mPeer.on('open', function(){
+    mHostConn = mPeer.connect('jws-'+code, {reliable:true});
+    mHostConn.on('open', function(){
+      mHostConn.send({type:'join', name:mMyName});
+    });
+    mHostConn.on('data', function(d){ mHandleHostMsg(d); });
+    mHostConn.on('close', function(){
+      if(document.querySelector('.screen.active').id.indexOf('screen-m')===0)
+        mShowError('انقطع الاتصال بالمضيف');
+    });
+    mHostConn.on('error', function(){
+      mEl('m-join-status').textContent='لم يُعثر على الجلسة. تحقق من الرمز.';
+    });
+  });
+
+  mPeer.on('error', function(){
+    mEl('m-join-status').textContent='خطأ في الاتصال. تحقق من الرمز.';
+  });
+}
+
+/* ---------- معالجة رسائل العملاء (المضيف) ---------- */
+function mHandleClientMsg(conn, d){
+  if(d.type==='join'){
+    if(players.indexOf(d.name)!==-1){ conn.send({type:'err',msg:'الاسم مستخدم، اختر اسماً آخر'}); return; }
+    conn.pname = d.name;
+    mConns.push({conn:conn, name:d.name});
+    players.push(d.name);
+    conn.send({type:'joined', players:players.slice()});
+    mBroadcast({type:'lobby', players:players.slice()});
+    mRenderLobbyHost();
+  }
+  else if(d.type==='role-ready'){
+    mEl('m-wait-title').textContent='انتظر الآخرين…';
+    /* count ready handled via mReadyCount flag */
+    mRoleReadyHost();
+  }
+  else if(d.type==='propose'){
+    proposedTeam = d.team;
+    var names = proposedTeam.map(function(i){return players[i];});
+    mVoteMap = {}; mVoteSent = false;
+    mBroadcast({type:'phase', screen:'vote', teamNames:names, teamIdx:proposedTeam.slice(), state:mGetState()});
+    mShowVoteScreen(names);
+    go('screen-m-vote');
+  }
+  else if(d.type==='vote'){
+    mVoteMap[conn.pname] = d.value;
+    mCheckAllVoted();
+  }
+  else if(d.type==='card'){
+    mCardMap[conn.pname] = d.value;
+    mCheckAllCards();
+  }
+}
+
+function mHandleDisconnect(conn){
+  var idx = -1;
+  for(var i=0;i<mConns.length;i++) if(mConns[i].conn===conn){ idx=i; break; }
+  if(idx!==-1){
+    var gone = mConns[idx].name;
+    mConns.splice(idx,1);
+    var pi = players.indexOf(gone);
+    if(pi!==-1 && !gameActive){ players.splice(pi,1); mRenderLobbyHost(); }
+    mBroadcast({type:'lobby', players:players.slice()});
+  }
+}
+
+/* ---------- معالجة رسائل المضيف (العميل) ---------- */
+function mHandleHostMsg(d){
+  if(d.type==='joined'){
+    players = d.players;
+    mEl('m-client-code').textContent = mEl('m-join-code-input').value.trim().toUpperCase();
+    mRenderLobbyClient(players);
+    go('screen-m-client-lobby');
+    mEl('m-join-status').textContent='';
+  }
+  else if(d.type==='lobby'){
+    players = d.players;
+    if(mEl('screen-m-client-lobby').classList.contains('active')) mRenderLobbyClient(players);
+  }
+  else if(d.type==='err'){
+    mEl('m-join-status').textContent = d.msg;
+  }
+  else if(d.type==='your-role'){
+    mMyRole = d.role;
+    mMySpyMates = d.mates||[];
+    mShowMultiRole();
+    go('screen-m-role');
+  }
+  else if(d.type==='phase'){
+    mApplyPhase(d);
+  }
+}
+
+/* ---------- تطبيق مرحلة من المضيف ---------- */
+function mApplyPhase(d){
+  if(d.state){ var s=d.state; players=s.players; missions=s.missions; currentMission=s.cm; leaderIndex=s.li; rejections=s.rj; proposedTeam=s.pt||[]; }
+  if(d.screen==='reveal'){ mShowMultiRole(); go('screen-m-role'); }
+  else if(d.screen==='board'){ mRenderBoard(); go('screen-m-board'); }
+  else if(d.screen==='vote'){ proposedTeam=d.teamIdx||[]; mShowVoteScreen(d.teamNames); go('screen-m-vote'); }
+  else if(d.screen==='vote-result'){ mVoteResult=d.vr; mShowVoteResult(d.vr, d.approved); go('screen-m-vote-result'); }
+  else if(d.screen==='mission'){ mShowMissionScreen(d.members); go('screen-m-mission'); }
+  else if(d.screen==='mission-result'){ missions[d.mn]=d.success; mShowMissionResult(d.success,d.sc,d.fc,d.mn); go('screen-m-result'); }
+  else if(d.screen==='gameover'){ mShowGameover(d.won,d.reason,d.spyNames); go('screen-m-gameover'); }
+  else if(d.screen==='board-after-reject'){ mRenderBoard(); go('screen-m-board'); }
+}
+
+/* ---------- متغير لعدّ جاهزين ---------- */
+var mReadyCount = 0;
+
+/* ---------- بدء اللعبة (المضيف) ---------- */
+function mStartGame(){
+  if(players.length < MIN_PLAYERS) return;
+  var idx=[];
+  for(var i=0;i<players.length;i++) idx.push(i);
+  shuffle(idx);
+
+  /* اختيار الجواسيس */
+  var history={};
+  try{ history=JSON.parse(store.get('spies_history')||'{}'); }catch(e){}
+  var pool=idx.slice(), weights=pool.map(function(i){return 1/((history[players[i]]||0)+1);}), selected=[];
+  for(var s=0;s<SPY_COUNT[players.length];s++){
+    var total=weights.reduce(function(a,b){return a+b;},0), r=cryptoRand()*total, cum=0;
+    for(var j=0;j<pool.length;j++){ cum+=weights[j]; if(r<=cum||j===pool.length-1){ selected.push(pool[j]); pool.splice(j,1); weights.splice(j,1); break; }}
+  }
+  spies = selected;
+
+  /* تحديث السجل */
+  for(var i=0;i<spies.length;i++){ var n=players[spies[i]]; history[n]=(history[n]||0)+1; }
+  store.set('spies_history', JSON.stringify(history));
+
+  missions=[null,null,null,null,null]; currentMission=0; rejections=0;
+  leaderIndex=Math.floor(cryptoRand()*players.length);
+  mReadyCount=0; mVoteMap={}; mCardMap={}; gameActive=true;
+
+  /* إرسال الأدوار لكل عميل */
+  for(var i=0;i<mConns.length;i++){
+    var ci = players.indexOf(mConns[i].name);
+    var isSpy_ = spies.indexOf(ci)!==-1;
+    var mates=[];
+    if(isSpy_) for(var j=0;j<spies.length;j++) if(players[spies[j]]!==mConns[i].name) mates.push(players[spies[j]]);
+    mConns[i].conn.send({type:'your-role', role:isSpy_?'spy':'ally', mates:mates});
+  }
+
+  /* الإذاعة: ابدأ الكشف */
+  mBroadcast({type:'phase', screen:'reveal'});
+
+  /* المضيف يرى دوره */
+  var hi = players.indexOf(mMyName);
+  mMyRole = spies.indexOf(hi)!==-1 ? 'spy' : 'ally';
+  mMySpyMates = [];
+  if(mMyRole==='spy') for(var j=0;j<spies.length;j++) if(players[spies[j]]!==mMyName) mMySpyMates.push(players[spies[j]]);
+  mShowMultiRole();
+  go('screen-m-role');
+}
+
+/* ---------- الدور السري ---------- */
+function mShowMultiRole(){
+  var spy = mMyRole==='spy';
+  mEl('m-role-greeting').textContent = 'يا '+mMyName+' — دورك السري:';
+  mEl('m-role-value').textContent = spy ? 'أنت جاسوس! 🕵️' : 'أنت من الحلفاء 🛡️';
+  mEl('m-role-value').style.color = spy ? 'var(--stamp)' : '#2A6B43';
+  if(spy){
+    mEl('m-role-extra').textContent = mMySpyMates.length ? 'زملاؤك الجواسيس: '+mMySpyMates.join('، ') : 'أنت الجاسوس الوحيد!';
+    mEl('m-role-tip').textContent = 'مهمتكم إفشال ٣ مهمات دون أن تنكشفوا. تخفَّ جيداً!';
+  } else {
+    mEl('m-role-extra').textContent = '';
+    mEl('m-role-tip').textContent = 'لا تعرف هوية أحد. مهمتكم إنجاح ٣ مهمات وكشف الجواسيس.';
+  }
+}
+
+function mRoleReady(){
+  if(mIsHost){
+    mReadyCount++;
+    if(mReadyCount >= players.length){ mBroadcast({type:'phase', screen:'board', state:mGetState()}); mRenderBoard(); go('screen-m-board'); }
+    else{ mEl('m-wait-title').textContent='انتظر الآخرين…'; mEl('m-wait-sub').textContent='البقية يقرؤون أدوارهم'; go('screen-m-wait'); }
+  } else {
+    mSend({type:'role-ready'});
+    mEl('m-wait-title').textContent='انتظر الآخرين…'; mEl('m-wait-sub').textContent='البقية يقرؤون أدوارهم';
+    go('screen-m-wait');
+  }
+}
+
+function mRoleReadyHost(){
+  mReadyCount++;
+  if(mReadyCount >= players.length){ mBroadcast({type:'phase', screen:'board', state:mGetState()}); mRenderBoard(); go('screen-m-board'); }
+}
+
+/* ---------- لوحة المهمات ---------- */
+function mGetState(){
+  return {players:players.slice(), missions:missions.slice(), cm:currentMission, li:leaderIndex, rj:rejections, pt:proposedTeam.slice()};
+}
+
+function mRenderBoard(){
+  var track='', sizes='';
+  for(var i=0;i<5;i++){
+    var cls='mission-dot';
+    if(missions[i]===true) cls+=' success';
+    else if(missions[i]===false) cls+=' fail';
+    else if(i===currentMission) cls+=' current';
+    track+='<div class="'+cls+'">'+(missions[i]===true?'✔':(missions[i]===false?'✘':toAr(i+1)))+'</div>';
+    sizes+='<span>'+toAr(TEAM_SIZES[players.length][i])+' لاعبين</span>';
+  }
+  mEl('m-missions-track').innerHTML=track;
+  mEl('m-missions-sizes').innerHTML=sizes;
+  mEl('m-board-leader').textContent=players[leaderIndex];
+  mEl('m-board-mission-num').textContent=toAr(currentMission+1);
+  mEl('m-board-team-size').textContent=toAr(TEAM_SIZES[players.length][currentMission])+' لاعبين';
+  mEl('m-board-rejections').textContent=toAr(rejections);
+  var tf=(players.length>=7&&currentMission===3);
+  mEl('m-board-two-fails').classList.toggle('hidden',!tf);
+  var amLeader = players[leaderIndex]===mMyName;
+  mEl('m-propose-btn').classList.toggle('hidden',!amLeader);
+  mEl('m-board-waiting').classList.toggle('hidden',amLeader);
+}
+
+/* ---------- ترشيح الفريق ---------- */
+var mLocalTeam = [];
+
+function mOpenPropose(){
+  mLocalTeam = [];
+  mEl('m-propose-size').textContent=toAr(TEAM_SIZES[players.length][currentMission])+' لاعبين';
+  var html='';
+  for(var i=0;i<players.length;i++){
+    html+='<button class="select-btn" data-mpick="'+i+'"><span>'+escapeHtml(players[i])+(i===leaderIndex?' 👑':'')+'</span><span class="mpick-mark"></span></button>';
+  }
+  mEl('m-propose-list').innerHTML=html;
+  mUpdateProposeUI();
+  go('screen-m-propose');
+}
+
+function mTogglePick(i){
+  var pos=mLocalTeam.indexOf(i);
+  var need=TEAM_SIZES[players.length][currentMission];
+  if(pos!==-1) mLocalTeam.splice(pos,1);
+  else if(mLocalTeam.length<need) mLocalTeam.push(i);
+  mUpdateProposeUI();
+}
+
+function mUpdateProposeUI(){
+  var need=TEAM_SIZES[players.length][currentMission];
+  var btns=mEl('m-propose-list').querySelectorAll('.select-btn');
+  for(var k=0;k<btns.length;k++){
+    var i=parseInt(btns[k].dataset.mpick,10);
+    var sel=mLocalTeam.indexOf(i)!==-1;
+    btns[k].classList.toggle('selected',sel);
+    btns[k].querySelector('.mpick-mark').textContent=sel?'✔':'';
+  }
+  mEl('m-propose-count').textContent='تم اختيار '+toAr(mLocalTeam.length)+' من '+toAr(need);
+  mEl('m-confirm-team-btn').disabled=mLocalTeam.length!==need;
+}
+
+function mConfirmTeam(){
+  var names=mLocalTeam.map(function(i){return players[i];});
+  if(mIsHost){
+    proposedTeam=mLocalTeam.slice();
+    mVoteMap={}; mVoteSent=false;
+    mBroadcast({type:'phase', screen:'vote', teamNames:names, teamIdx:proposedTeam.slice(), state:mGetState()});
+    mShowVoteScreen(names);
+    go('screen-m-vote');
+  } else {
+    mSend({type:'propose', team:mLocalTeam.slice()});
+    mEl('m-wait-title').textContent='انتظر…'; mEl('m-wait-sub').textContent='يتم عرض ترشيحك للتصويت';
+    go('screen-m-wait');
+  }
+}
+
+/* ---------- التصويت ---------- */
+function mShowVoteScreen(names){
+  mEl('m-vote-team').textContent=names.join(' — ');
+  mEl('m-vote-btns').classList.remove('hidden');
+  mEl('m-vote-submitted').classList.add('hidden');
+  mEl('m-vote-yes-btn').disabled=false;
+  mEl('m-vote-no-btn').disabled=false;
+  mVoteSent=false;
+}
+
+function mCastVote(val){
+  if(mVoteSent) return;
+  mVoteSent=true;
+  mEl('m-vote-btns').classList.add('hidden');
+  mEl('m-vote-submitted').classList.remove('hidden');
+  mEl('m-vote-waiting-count').textContent='في انتظار الآخرين…';
+  if(mIsHost){ mVoteMap[mMyName]=val; mCheckAllVoted(); }
+  else mSend({type:'vote', value:val});
+}
+
+function mCheckAllVoted(){
+  var count=Object.keys(mVoteMap).length;
+  mEl('m-vote-waiting-count').textContent='صوّت '+toAr(count)+' من '+toAr(players.length);
+  if(count<players.length) return;
+  var yesNames=[], noNames=[];
+  Object.keys(mVoteMap).forEach(function(n){ if(mVoteMap[n]) yesNames.push(n); else noNames.push(n); });
+  var approved=yesNames.length>noNames.length;
+  var vr={approved:approved, yesNames:yesNames, noNames:noNames};
+  mBroadcast({type:'phase', screen:'vote-result', vr:vr, approved:approved, state:mGetState()});
+  mShowVoteResult(vr, approved);
+  go('screen-m-vote-result');
+}
+
+function mShowVoteResult(vr, approved){
+  mEl('m-vr-title').textContent = approved ? 'وافقت الأغلبية ✔' : 'رُفض الترشيح ✘';
+  mEl('m-vr-title').style.color = approved ? 'var(--good)' : 'var(--stamp)';
+  mEl('m-vr-yes').textContent = vr.yesNames.length ? vr.yesNames.map(escapeHtml).join('، ') : '—';
+  mEl('m-vr-no').textContent  = vr.noNames.length  ? vr.noNames.map(escapeHtml).join('، ')  : '—';
+  mEl('m-vr-warn').textContent = (!approved && rejections>=3) ? '⚠ رفضة أخرى أو اثنتان وينتهي كل شيء!' : '';
+  mEl('m-vr-continue-btn').classList.toggle('hidden',!mIsHost);
+  mEl('m-vr-waiting').classList.toggle('hidden',mIsHost);
+}
+
+function mVrContinue(){
+  var approved = mVoteResult ? mVoteResult.approved : Object.keys(mVoteMap).filter(function(n){return mVoteMap[n];}).length > players.length/2;
+  if(approved){
+    rejections=0;
+    mCardMap={}; mCardSent=false;
+    var memberNames=proposedTeam.map(function(i){return players[i];});
+    mBroadcast({type:'phase', screen:'mission', members:memberNames, state:mGetState()});
+    mShowMissionScreen(memberNames);
+    go('screen-m-mission');
+  } else {
+    rejections++;
+    if(rejections>=5){ mEndGame(false,'رُفضت ٥ ترشيحات متتالية — انهارت الثقة!'); return; }
+    leaderIndex=(leaderIndex+1)%players.length;
+    mBroadcast({type:'phase', screen:'board', state:mGetState()});
+    mRenderBoard(); go('screen-m-board');
+  }
+}
+
+/* ---------- تنفيذ المهمة ---------- */
+function mShowMissionScreen(memberNames){
+  mEl('m-mission-num').textContent=toAr(currentMission+1);
+  mInMission=memberNames.indexOf(mMyName)!==-1;
+  mCardSent=false;
+  mEl('m-mission-member-area').classList.toggle('hidden',!mInMission);
+  mEl('m-mission-submitted').classList.add('hidden');
+  mEl('m-mission-spectator').classList.toggle('hidden',mInMission);
+  if(mInMission){ mEl('m-card-warn').textContent=''; mEl('m-card-success-btn').disabled=false; mEl('m-card-fail-btn').disabled=false; }
+}
+
+function mPlayCard(success){
+  if(mCardSent) return;
+  if(!success && mMyRole!=='spy'){
+    mEl('m-card-warn').textContent='🛡️ أنت من الحلفاء — لا يمكنك إلا اختيار «نجاح»!';
+    return;
+  }
+  mCardSent=true;
+  mEl('m-mission-member-area').classList.add('hidden');
+  mEl('m-mission-submitted').classList.remove('hidden');
+  if(mIsHost){ mCardMap[mMyName]=success; mCheckAllCards(); }
+  else mSend({type:'card', value:success});
+}
+
+function mCheckAllCards(){
+  var need=proposedTeam.length;
+  if(Object.keys(mCardMap).length<need) return;
+  var fails=0; Object.keys(mCardMap).forEach(function(n){if(!mCardMap[n])fails++;});
+  var tf=(players.length>=7&&currentMission===3)?2:1;
+  var success=fails<tf;
+  missions[currentMission]=success;
+  var mn=currentMission;
+  mBroadcast({type:'phase', screen:'mission-result', success:success, sc:Object.keys(mCardMap).length-fails, fc:fails, mn:mn, state:mGetState()});
+  mShowMissionResult(success, Object.keys(mCardMap).length-fails, fails, mn);
+  go('screen-m-result');
+}
+
+function mShowMissionResult(success, sc, fc, mn){
+  mEl('m-result-num').textContent=toAr(mn+1);
+  mEl('m-result-outcome').textContent=success?'نجحت المهمة! 🛡️':'فشلت المهمة! 💥';
+  mEl('m-result-outcome').style.color=success?'#2A6B43':'var(--stamp)';
+  mEl('m-result-stamp').textContent=success?'مهمة ناجحة':'مهمة فاشلة';
+  mEl('m-count-success').textContent=toAr(sc);
+  mEl('m-count-fail').textContent=toAr(fc);
+  mEl('m-result-continue-btn').classList.toggle('hidden',!mIsHost);
+  mEl('m-result-waiting').classList.toggle('hidden',mIsHost);
+}
+
+function mResultContinue(){
+  var wins=0,losses=0;
+  for(var i=0;i<5;i++){if(missions[i]===true)wins++;if(missions[i]===false)losses++;}
+  if(wins>=3){mEndGame(true,'أنجح الحلفاء ٣ مهمات رغم كل محاولات التخريب.'); return;}
+  if(losses>=3){mEndGame(false,'أفشل الجواسيس ٣ مهمات من الداخل دون أن يُكشفوا.'); return;}
+  currentMission++;
+  leaderIndex=(leaderIndex+1)%players.length;
+  mBroadcast({type:'phase', screen:'board', state:mGetState()});
+  mRenderBoard(); go('screen-m-board');
+}
+
+/* ---------- نهاية اللعبة ---------- */
+function mEndGame(won, reason){
+  gameActive=false;
+  var spyNames=spies.map(function(i){return players[i];});
+  mBroadcast({type:'phase', screen:'gameover', won:won, reason:reason, spyNames:spyNames});
+  mShowGameover(won, reason, spyNames);
+  go('screen-m-gameover');
+}
+
+function mShowGameover(won, reason, spyNames){
+  mEl('m-winner-text').textContent=won?'انتصر الحلفاء! 🛡️':'انتصر الجواسيس! 🕵️';
+  mEl('m-winner-text').style.color=won?'#2A6B43':'var(--stamp)';
+  mEl('m-winner-reason').textContent=reason;
+  mEl('m-spies-reveal').textContent=spyNames.join('، ');
+  mEl('m-rematch-btn').classList.toggle('hidden',!mIsHost);
+  mEl('m-rematch-waiting').classList.toggle('hidden',mIsHost);
+}
+
+function mRematch(){
+  mReadyCount=0; mVoteMap={}; mCardMap={}; mVoteResult=null;
+  mStartGame();
+}
+
+/* ---------- لوبي ---------- */
+function mRenderLobbyHost(){
+  var n=players.length, html='';
+  for(var i=0;i<n;i++) html+='<li>🕵️ '+escapeHtml(players[i])+(i===0?' <span class="gold small">(مضيف)</span>':'')+'</li>';
+  mEl('m-waiting-list').innerHTML=html;
+  mEl('m-lobby-hint').textContent = n<MIN_PLAYERS ? 'تحتاج '+toAr(MIN_PLAYERS-n)+' لاعبين إضافيين على الأقل.' : 'جاهزون! '+toAr(n)+' لاعبين — '+toAr(SPY_COUNT[n])+' جواسيس.';
+  mEl('m-start-multi-btn').disabled = n<MIN_PLAYERS;
+}
+
+function mRenderLobbyClient(list){
+  var html='';
+  for(var i=0;i<list.length;i++) html+='<li>🕵️ '+escapeHtml(list[i])+(i===0?' <span class="gold small">(مضيف)</span>':'')+'</li>';
+  mEl('m-client-lobby-list').innerHTML=html;
+  mEl('m-client-lobby-hint').textContent=toAr(list.length)+' لاعبين في الجلسة';
+}
+
+/* ---------- أحداث النقر (متعدد) ---------- */
+document.addEventListener('click', function(e){
+  var t = e.target.closest ? e.target.closest('button') : e.target;
+  if(!t || t.tagName!=='BUTTON') return;
+
+  if(t.dataset.mpick !== undefined){ mTogglePick(parseInt(t.dataset.mpick,10)); return; }
+
+  switch(t.id){
+    case 'm-create-btn':        go('screen-m-create'); break;
+    case 'm-host-create-btn':   mCreateRoom(); break;
+    case 'm-join-submit-btn':   mJoinRoom(); break;
+    case 'm-start-multi-btn':   mStartGame(); break;
+    case 'm-role-ready-btn':    mRoleReady(); break;
+    case 'm-propose-btn':       mOpenPropose(); break;
+    case 'm-confirm-team-btn':  mConfirmTeam(); break;
+    case 'm-vote-yes-btn':      mCastVote(true); break;
+    case 'm-vote-no-btn':       mCastVote(false); break;
+    case 'm-vr-continue-btn':   mVrContinue(); break;
+    case 'm-card-success-btn':  mPlayCard(true); break;
+    case 'm-card-fail-btn':     mPlayCard(false); break;
+    case 'm-result-continue-btn': mResultContinue(); break;
+    case 'm-rematch-btn':       mRematch(); break;
+    case 'm-error-home-btn':    mCleanup(); go('screen-home'); break;
+  }
+});
+
+/* تنظيف الاتصال عند العودة للرئيسية من شاشات المتعدد */
+document.addEventListener('click', function(e){
+  var t = e.target.closest ? e.target.closest('button') : e.target;
+  if(t && t.dataset.go==='screen-home' && mPeer) mCleanup();
+});
 </script>
 </body>
 </html>
