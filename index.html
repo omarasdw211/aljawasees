@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الجواسيس — الحلفاء ضد الجواسيس</title>
+<style>
+  :root{
+    --ink:#0E1420; --ink2:#151E2E; --paper:#E8D9B5; --paper2:#DCC99C;
+    --stamp:#C8372D; --gold:#E0B042; --good:#3E9B5F; --text:#EDE9DF; --muted:#8B93A3;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--ink); color:var(--text); min-height:100vh;
+    font-family:"Tajawal","Segoe UI",Tahoma,Arial,sans-serif; line-height:1.7;
+  }
+  main{ max-width:480px; margin:0 auto; padding:2rem 1rem 3rem; }
+  .display{ font-family:"Lalezar","Tajawal",Tahoma,sans-serif; font-weight:700; letter-spacing:.5px; }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; animation:fadeUp .35s ease both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;} }
+  @media (prefers-reduced-motion: reduce){ .screen.active{ animation:none; } }
+
+  h1{ font-size:3.2rem; } h2{ font-size:1.9rem; margin-bottom:1rem; }
+  .center{ text-align:center; }
+  .muted{ color:var(--muted); } .small{ font-size:.85rem; }
+  .gold{ color:var(--gold); } .red{ color:var(--stamp); } .green{ color:var(--good); }
+  .mb-1{margin-bottom:.5rem;} .mb-2{margin-bottom:1rem;} .mb-3{margin-bottom:1.5rem;}
+  .mb-4{margin-bottom:2rem;} .mb-5{margin-bottom:2.5rem;}
+
+  button{
+    font-family:inherit; cursor:pointer; border:none; border-radius:10px;
+    transition:transform .12s ease, filter .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button:active{ transform:scale(.97); }
+  button:focus-visible, input:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+
+  .btn{ display:block; width:100%; padding:.85rem 1rem; font-size:1.25rem; }
+  .btn-red{ background:var(--stamp); color:#fff; font-family:"Lalezar","Tajawal",sans-serif; font-size:1.4rem; }
+  .btn-green{ background:var(--good); color:#fff; font-family:"Lalezar","Tajawal",sans-serif; font-size:1.4rem; }
+  .btn-gold{ background:var(--gold); color:#1c1505; font-family:"Lalezar","Tajawal",sans-serif; }
+  .btn-ghost{ background:var(--ink2); color:var(--text); border:1px solid rgba(139,147,163,.3); }
+  .btn-red:hover,.btn-green:hover{ filter:brightness(1.12); }
+  .btn-ghost:hover{ filter:brightness(1.25); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+  .btn-back{ background:none; color:var(--muted); font-size:1rem; padding:.3rem 0; margin-bottom:1rem; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+  .stack{ display:grid; gap:.75rem; }
+
+  .chip{
+    background:var(--ink2); border:1px solid rgba(139,147,163,.25);
+    border-radius:12px; padding:1rem;
+  }
+  .chip h3{ font-family:"Lalezar","Tajawal",sans-serif; color:var(--gold); font-size:1.4rem; margin-bottom:.5rem; }
+  .chip ul{ padding-right:1.3rem; }
+  .chip li{ margin-bottom:.35rem; }
+
+  .dossier{
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.025) 0 2px, transparent 2px 4px),
+      linear-gradient(160deg, var(--paper), var(--paper2));
+    color:#2A2114; border-radius:8px; position:relative; overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.12);
+    padding:2rem 2.4rem 2rem 1.5rem; text-align:center;
+  }
+  .dossier::before{
+    content:""; position:absolute; right:0; top:0; bottom:0; width:10px;
+    background:repeating-linear-gradient(45deg, var(--stamp) 0 8px, transparent 8px 16px);
+    opacity:.85;
+  }
+  .stamp{
+    display:inline-block; padding:.15rem 1rem; border:3px solid var(--stamp);
+    color:var(--stamp); font-family:"Lalezar","Tajawal",sans-serif; font-size:1.25rem;
+    transform:rotate(-6deg); border-radius:4px; opacity:.9;
+  }
+  .role-value{ font-size:2.3rem; line-height:1.35; }
+
+  /* مسار المهمات */
+  .missions{ display:flex; justify-content:center; gap:.6rem; margin-bottom:.4rem; }
+  .mission-dot{
+    width:52px; height:52px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Lalezar","Tajawal",sans-serif; font-size:1.3rem;
+    background:var(--ink2); border:2px solid rgba(139,147,163,.4); color:var(--muted);
+  }
+  .mission-dot.current{ border-color:var(--gold); color:var(--gold); box-shadow:0 0 14px rgba(224,176,66,.35); }
+  .mission-dot.success{ background:var(--good); border-color:var(--good); color:#fff; }
+  .mission-dot.fail{ background:var(--stamp); border-color:var(--stamp); color:#fff; }
+  .mission-sizes{ display:flex; justify-content:center; gap:.6rem; }
+  .mission-sizes span{ width:52px; text-align:center; font-size:.75rem; color:var(--muted); }
+
+  .badge{
+    background:var(--ink2); border:1px solid rgba(139,147,163,.25);
+    border-radius:999px; padding:.2rem 1rem; font-size:.9rem;
+  }
+  .row-between{ display:flex; justify-content:space-between; align-items:center; }
+
+  input[type=text]{
+    flex:1; background:var(--ink2); color:var(--text);
+    border:1px solid rgba(139,147,163,.3); border-radius:10px;
+    padding:.8rem 1rem; font-family:inherit; font-size:1rem;
+  }
+  input::placeholder{ color:var(--muted); }
+  .input-row{ display:flex; gap:.5rem; margin-bottom:.6rem; }
+  .input-row button{ padding:0 1.4rem; font-size:1.2rem; }
+
+  #player-list, #team-list{ list-style:none; display:grid; gap:.5rem; margin-bottom:.5rem; }
+  #player-list li{
+    background:var(--ink2); border:1px solid rgba(139,147,163,.25);
+    border-radius:10px; padding:.55rem 1rem;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .del-btn{ background:none; color:var(--stamp); font-size:1.3rem; padding:.1rem .5rem; }
+
+  .select-btn{
+    width:100%; text-align:right; background:var(--ink2); color:var(--text);
+    border:1px solid rgba(139,147,163,.25); border-radius:10px;
+    padding:.7rem 1rem; font-size:1.05rem;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .select-btn.selected{ border-color:var(--gold); background:rgba(224,176,66,.12); color:var(--gold); }
+
+  .hidden{ display:none !important; }
+  .warn{ color:var(--stamp); min-height:1.4rem; font-size:.9rem; }
+  .team-names{ font-size:1.2rem; }
+  .vote-count{ font-size:1rem; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ===================== الشاشة الرئيسية ===================== -->
+  <section id="screen-home" class="screen active center">
+    <p class="small muted mb-1" style="letter-spacing:3px">عملية سرية — فريقان وخمس مهمات</p>
+    <h1 class="display mb-1">الجواسيس</h1>
+    <div class="stamp mb-4">الحلفاء ضد الجواسيس</div>
+    <p class="muted mb-5">جواسيس متخفّون بينكم يحاولون إفشال مهماتكم من الداخل. من يربح ٣ مهمات من ٥ ينتصر. لعبة على جهاز واحد بنظام «مرّر الهاتف».</p>
+    <div class="stack">
+      <button class="btn btn-red" data-go="screen-setup">ابدأ اللعب</button>
+      <button class="btn btn-ghost" data-go="screen-howto">كيف تلعب؟ (الشرح الكامل)</button>
+    </div>
+  </section>
+
+  <!-- ===================== كيف تلعب ===================== -->
+  <section id="screen-howto" class="screen">
+    <button class="btn-back" data-go="screen-home">→ رجوع</button>
+    <h2 class="display">كيف تلعب؟</h2>
+
+    <div class="stack mb-4">
+      <div class="chip">
+        <h3>فكرة اللعبة</h3>
+        <p>اللاعبون (من ٥ إلى ١٠) ينقسمون سراً إلى فريقين: <b class="green">الحلفاء</b> (الأغلبية) و<b class="red">الجواسيس</b> (الأقلية). الجواسيس يعرفون بعضهم البعض، أما الحلفاء فلا يعرفون من معهم ومن ضدهم!</p>
+        <p>تتكوّن اللعبة من <b>٥ مهمات</b>. <b class="green">يفوز الحلفاء</b> بإنجاح ٣ مهمات، و<b class="red">يفوز الجواسيس</b> بإفشال ٣ مهمات.</p>
+      </div>
+
+      <div class="chip">
+        <h3>١ — توزيع الأدوار (مرّر الهاتف)</h3>
+        <p>يُمرَّر الهاتف على الجميع. كل لاعب يرى دوره سراً:</p>
+        <ul>
+          <li><b class="green">الحليف:</b> يعرف أنه حليف فقط، ولا يعرف هوية أحد.</li>
+          <li><b class="red">الجاسوس:</b> يرى أسماء زملائه الجواسيس ليتعاونوا في الخفاء.</li>
+        </ul>
+        <p><b>ممنوع</b> أن يرى أي لاعب شاشة غيره أثناء التوزيع.</p>
+      </div>
+
+      <div class="chip">
+        <h3>٢ — تشكيل فريق المهمة والتصويت</h3>
+        <p>في كل مهمة يوجد <b>قائد</b> (يتناوب الدور على الجميع). القائد يرشّح عدداً محدداً من اللاعبين لتنفيذ المهمة (العدد يظهر على الشاشة).</p>
+        <p>ثم <b>يصوّت جميع اللاعبين علناً وفي نفس اللحظة</b> (إبهام للأعلى = موافق، للأسفل = رافض):</p>
+        <ul>
+          <li>إن وافقت <b>الأغلبية</b> → ينفّذ الفريق المهمة.</li>
+          <li>إن رُفض الترشيح → ينتقل دور القيادة للاعب التالي ويرشّح فريقاً جديداً.</li>
+          <li>⚠ إن رُفضت <b>٥ ترشيحات متتالية</b> في نفس المهمة → <b class="red">يفوز الجواسيس فوراً</b>! فلا تماطلوا كثيراً.</li>
+        </ul>
+      </div>
+
+      <div class="chip">
+        <h3>٣ — تنفيذ المهمة (سرّي تماماً)</h3>
+        <p>يُمرَّر الهاتف على أعضاء فريق المهمة فقط، وكلٌّ منهم يختار بطاقته سراً:</p>
+        <ul>
+          <li><b class="green">الحليف مجبر</b> على اختيار بطاقة «نجاح».</li>
+          <li><b class="red">الجاسوس يختار</b>: «نجاح» (ليتخفّى ويكسب الثقة) أو «فشل» (ليُسقط المهمة).</li>
+        </ul>
+        <p>ثم تُعلن النتيجة: عدد بطاقات النجاح والفشل <b>دون كشف من اختار ماذا</b>. بطاقة فشل واحدة تكفي لإسقاط المهمة (المهمة الرابعة في الجلسات الكبيرة ٧+ لاعبين تحتاج بطاقتي فشل).</p>
+      </div>
+
+      <div class="chip">
+        <h3>٤ — النقاش هو قلب اللعبة!</h3>
+        <p>بين المهمات، ناقشوا واتهموا ودافعوا: من كان في المهمة الفاشلة؟ من صوّت بغرابة؟ من يدافع عن المشبوهين؟</p>
+        <ul>
+          <li><b class="green">الحلفاء:</b> حللوا الأنماط ولا تضعوا مشبوهاً في فريق مهمة.</li>
+          <li><b class="red">الجواسيس:</b> اكذبوا بثقة، اتهموا الأبرياء، ولا تُفشلوا كل مهمة كي لا تنكشفوا.</li>
+        </ul>
+      </div>
+
+      <div class="chip">
+        <h3>متى تنتهي اللعبة؟</h3>
+        <ul>
+          <li>٣ مهمات ناجحة → <b class="green">فوز الحلفاء</b> 🛡️</li>
+          <li>٣ مهمات فاشلة → <b class="red">فوز الجواسيس</b> 🕵️</li>
+          <li>٥ ترشيحات مرفوضة متتالية → <b class="red">فوز الجواسيس</b></li>
+        </ul>
+        <p>وفي النهاية تُكشف هويات الجواسيس للجميع!</p>
+      </div>
+    </div>
+
+    <button class="btn btn-red" data-go="screen-setup">فهمت، لنبدأ!</button>
+  </section>
+
+  <!-- ===================== إعداد اللاعبين ===================== -->
+  <section id="screen-setup" class="screen">
+    <button class="btn-back" data-go="screen-home">→ رجوع</button>
+    <h2 class="display mb-2">العملاء</h2>
+
+    <div class="input-row">
+      <input id="player-input" type="text" maxlength="20" placeholder="اسم اللاعب…">
+      <button id="add-btn" class="btn-gold display">إضافة</button>
+    </div>
+    <p id="dup-warn" class="warn"></p>
+
+    <ul id="player-list"></ul>
+    <p id="player-hint" class="small muted mb-4"></p>
+
+    <button id="start-btn" class="btn btn-red" disabled>توزيع الأدوار وبدء اللعبة 🕵️</button>
+  </section>
+
+  <!-- ===================== كشف الأدوار ===================== -->
+  <section id="screen-reveal" class="screen center">
+    <p class="small muted mb-2">توزيع الأدوار — <span id="reveal-progress"></span></p>
+
+    <div id="reveal-pass">
+      <h2 class="display" style="margin-bottom:.2rem">مرّر الهاتف إلى</h2>
+      <p id="reveal-name" class="display gold mb-4" style="font-size:2.8rem"></p>
+      <p class="muted mb-3">تأكد أن أحداً غيرك لا يرى الشاشة!</p>
+      <button id="show-role-btn" class="btn btn-red" style="padding:1.1rem">اضغط لرؤية دورك 👁️</button>
+    </div>
+
+    <div id="reveal-role" class="hidden">
+      <div class="dossier mb-4">
+        <div class="stamp mb-2">سري للغاية</div>
+        <p id="role-value" class="display role-value"></p>
+        <p id="role-extra" class="mb-1" style="font-size:1.1rem"></p>
+        <p id="role-tip" class="small" style="opacity:.8; margin-top:.6rem"></p>
+      </div>
+      <button id="hide-role-btn" class="btn btn-ghost display" style="padding:1.1rem; font-size:1.4rem">إخفاء الدور وتمرير الهاتف ✋</button>
+    </div>
+  </section>
+
+  <!-- ===================== لوحة المهمات ===================== -->
+  <section id="screen-board" class="screen center">
+    <h2 class="display mb-2">سجل المهمات</h2>
+    <div class="missions" id="missions-track"></div>
+    <div class="mission-sizes" id="missions-sizes"></div>
+
+    <div class="chip mb-3" style="margin-top:1.5rem; text-align:right">
+      <p>👑 قائد هذه الجولة: <b id="board-leader" class="gold"></b></p>
+      <p>🎯 المهمة <b id="board-mission-num"></b> تحتاج فريقاً من <b id="board-team-size" class="gold"></b></p>
+      <p id="board-two-fails" class="small red hidden">⚠ هذه المهمة لا تفشل إلا ببطاقتي فشل!</p>
+      <p class="small muted">ترشيحات مرفوضة متتالية: <b id="board-rejections" class="red"></b> من ٥</p>
+    </div>
+
+    <button id="propose-btn" class="btn btn-red" style="padding:1rem">تشكيل فريق المهمة 👥</button>
+  </section>
+
+  <!-- ===================== ترشيح الفريق ===================== -->
+  <section id="screen-propose" class="screen">
+    <h2 class="display center mb-1">ترشيح الفريق</h2>
+    <p class="center muted mb-3">يا <b id="propose-leader" class="gold"></b>، اختر <b id="propose-size" class="gold"></b> للمهمة:</p>
+
+    <div id="propose-list" class="stack mb-2"></div>
+    <p id="propose-count" class="center small muted mb-3"></p>
+
+    <button id="confirm-team-btn" class="btn btn-gold display" disabled style="padding:1rem">عرض الترشيح للتصويت 🗳️</button>
+  </section>
+
+  <!-- ===================== التصويت ===================== -->
+  <section id="screen-vote" class="screen center">
+    <h2 class="display mb-2">التصويت العلني</h2>
+    <div class="chip mb-3">
+      <p class="small muted mb-1">الفريق المرشَّح:</p>
+      <p id="vote-team" class="team-names gold display"></p>
+    </div>
+    <p class="muted mb-1">عند العد لثلاثة، يصوّت الجميع <b>في نفس اللحظة</b>:</p>
+    <p class="mb-4">👍 موافق &nbsp;&nbsp;|&nbsp;&nbsp; 👎 رافض</p>
+    <p class="small muted mb-3">هل وافقت الأغلبية؟</p>
+    <div class="grid2">
+      <button id="vote-yes-btn" class="btn btn-green">✔ تمت الموافقة</button>
+      <button id="vote-no-btn" class="btn btn-red">✘ رُفض الترشيح</button>
+    </div>
+    <p id="vote-warning" class="warn center" style="margin-top:1rem"></p>
+  </section>
+
+  <!-- ===================== تنفيذ المهمة (مرّر الهاتف) ===================== -->
+  <section id="screen-mission" class="screen center">
+    <p class="small muted mb-2">تنفيذ المهمة <span id="mission-num-label"></span> — <span id="mission-progress"></span></p>
+
+    <div id="mission-pass">
+      <h2 class="display" style="margin-bottom:.2rem">مرّر الهاتف إلى</h2>
+      <p id="mission-player-name" class="display gold mb-4" style="font-size:2.8rem"></p>
+      <p class="muted mb-3">سيختار بطاقته سراً. لا تنظروا إلى الشاشة!</p>
+      <button id="mission-show-btn" class="btn btn-red" style="padding:1.1rem">اضغط لاختيار بطاقتك 🃏</button>
+    </div>
+
+    <div id="mission-choice" class="hidden">
+      <p class="muted mb-3">اختر بطاقتك بسرّية تامة:</p>
+      <div class="grid2 mb-2">
+        <button id="card-success-btn" class="btn btn-green" style="padding:1.4rem 1rem">نجاح ✔</button>
+        <button id="card-fail-btn" class="btn btn-red" style="padding:1.4rem 1rem">فشل ✘</button>
+      </div>
+      <p id="mission-choice-warn" class="warn"></p>
+    </div>
+
+    <div id="mission-done" class="hidden">
+      <div class="chip mb-3">
+        <p style="font-size:1.3rem">✅ تم تسجيل بطاقتك سراً</p>
+      </div>
+      <button id="mission-next-btn" class="btn btn-ghost display" style="padding:1.1rem; font-size:1.4rem">إخفاء وتمرير الهاتف ✋</button>
+    </div>
+  </section>
+
+  <!-- ===================== نتيجة المهمة ===================== -->
+  <section id="screen-mission-result" class="screen center">
+    <h2 class="display mb-3">نتيجة المهمة <span id="result-mission-num"></span></h2>
+    <div class="dossier mb-3">
+      <div class="stamp mb-3" id="result-stamp">نتيجة سرية</div>
+      <p id="mission-outcome" class="display role-value mb-2"></p>
+      <p class="vote-count">بطاقات النجاح: <b id="count-success"></b> &nbsp;|&nbsp; بطاقات الفشل: <b id="count-fail"></b></p>
+    </div>
+    <p class="small muted mb-4">ناقشوا الآن: من تتهمون؟ 🤔</p>
+    <button id="continue-btn" class="btn btn-gold display" style="padding:1rem">متابعة ←</button>
+  </section>
+
+  <!-- ===================== نهاية اللعبة ===================== -->
+  <section id="screen-gameover" class="screen center">
+    <h2 class="display mb-3">انتهت العملية!</h2>
+    <div class="dossier mb-4">
+      <div class="stamp mb-3">تم رفع السرية</div>
+      <p id="winner-text" class="display role-value mb-2"></p>
+      <p id="winner-reason" class="small mb-2" style="opacity:.8"></p>
+      <p class="small" style="opacity:.7">الجواسيس كانوا:</p>
+      <p id="spies-reveal" class="display" style="font-size:1.7rem; color:var(--stamp)"></p>
+    </div>
+    <div class="stack">
+      <button id="rematch-btn" class="btn btn-red">لعبة جديدة (نفس اللاعبين) 🔁</button>
+      <button class="btn btn-ghost" data-go="screen-setup">تعديل اللاعبين</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ====================== التخزين (LocalStorage مع بديل آمن) ====================== */
+var memStore = {};
+var store = {
+  get: function(k){ try{ return localStorage.getItem(k); }catch(e){ return memStore[k] != null ? memStore[k] : null; } },
+  set: function(k,v){ try{ localStorage.setItem(k,v); }catch(e){ memStore[k]=v; } }
+};
+
+/* ====================== قواعد اللعبة حسب عدد اللاعبين ====================== */
+var SPY_COUNT  = {5:2, 6:2, 7:3, 8:3, 9:3, 10:4};
+var TEAM_SIZES = {
+  5:[2,3,2,3,3], 6:[2,3,4,3,4], 7:[2,3,3,4,4],
+  8:[3,4,4,5,5], 9:[3,4,4,5,5], 10:[3,4,4,5,5]
+};
+var MIN_PLAYERS = 5, MAX_PLAYERS = 10;
+
+/* ====================== حالة اللعبة ====================== */
+var players = [];
+try{ players = JSON.parse(store.get("spies_players") || "[]"); }catch(e){ players = []; }
+
+var spies = [];            // مؤشرات الجواسيس
+var missions = [];         // null | true (نجاح) | false (فشل)
+var currentMission = 0;    // 0..4
+var leaderIndex = 0;
+var rejections = 0;
+var revealIndex = 0;
+var proposedTeam = [];     // مؤشرات أعضاء الفريق
+var missionTurn = 0;       // ترتيب اللاعب الحالي في تنفيذ المهمة
+var missionCards = [];     // البطاقات السرية (true=نجاح)
+var gameActive = false;
+
+function $(id){ return document.getElementById(id); }
+function isSpy(i){ return spies.indexOf(i) !== -1; }
+function teamSize(){ return TEAM_SIZES[players.length][currentMission]; }
+function failsNeeded(){ return (players.length >= 7 && currentMission === 3) ? 2 : 1; }
+
+function toAr(n){
+  var d="٠١٢٣٤٥٦٧٨٩";
+  return String(n).replace(/\d/g, function(c){ return d[+c]; });
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function shuffle(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1)), t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+  }
+  return arr;
+}
+
+/* ====================== التنقل ====================== */
+function go(id){
+  var s = document.querySelectorAll(".screen");
+  for(var i=0;i<s.length;i++) s[i].classList.remove("active");
+  $(id).classList.add("active");
+  if(id === "screen-setup") renderPlayers();
+  window.scrollTo(0,0);
+}
+
+/* ====================== إدارة اللاعبين ====================== */
+function savePlayers(){ store.set("spies_players", JSON.stringify(players)); }
+
+function addPlayer(){
+  var input = $("player-input"), warn = $("dup-warn");
+  var name = input.value.trim();
+  warn.textContent = "";
+  if(!name) return;
+  if(players.length >= MAX_PLAYERS){ warn.textContent = "⚠ الحد الأقصى ١٠ لاعبين."; return; }
+  if(players.indexOf(name) !== -1){ warn.textContent = "⚠ هذا الاسم مضاف مسبقاً!"; return; }
+  players.push(name);
+  input.value = ""; input.focus();
+  savePlayers(); renderPlayers();
+}
+
+function removePlayer(i){
+  players.splice(i,1);
+  savePlayers(); renderPlayers();
+}
+
+function renderPlayers(){
+  var html = "";
+  for(var i=0;i<players.length;i++){
+    html += '<li><span>🕵️ ' + escapeHtml(players[i]) + '</span>' +
+            '<button class="del-btn" data-del="' + i + '" aria-label="حذف">✕</button></li>';
+  }
+  $("player-list").innerHTML = html;
+
+  var hint = $("player-hint");
+  if(players.length < MIN_PLAYERS){
+    hint.textContent = "أضف " + toAr(MIN_PLAYERS - players.length) + " أيضاً — اللعبة تحتاج من ٥ إلى ١٠ لاعبين.";
+  } else {
+    hint.textContent = "جاهزون! " + toAr(players.length) + " لاعبين: " +
+      toAr(players.length - SPY_COUNT[players.length]) + " حلفاء ضد " +
+      toAr(SPY_COUNT[players.length]) + " جواسيس.";
+  }
+  $("start-btn").disabled = players.length < MIN_PLAYERS;
+}
+
+/* ====================== بدء اللعبة وتوزيع الأدوار ====================== */
+function startGame(){
+  if(players.length < MIN_PLAYERS) return;
+  var idx = [];
+  for(var i=0;i<players.length;i++) idx.push(i);
+  shuffle(idx);
+  spies = idx.slice(0, SPY_COUNT[players.length]);
+
+  missions = [null,null,null,null,null];
+  currentMission = 0;
+  rejections = 0;
+  leaderIndex = Math.floor(Math.random() * players.length);
+  revealIndex = 0;
+  gameActive = true;
+
+  showRevealPass();
+  go("screen-reveal");
+}
+
+function showRevealPass(){
+  $("reveal-pass").classList.remove("hidden");
+  $("reveal-role").classList.add("hidden");
+  $("reveal-name").textContent = players[revealIndex];
+  $("reveal-progress").textContent = "اللاعب " + toAr(revealIndex+1) + " من " + toAr(players.length);
+}
+
+function showRole(){
+  var spy = isSpy(revealIndex);
+  $("role-value").textContent = spy ? "أنت جاسوس! 🕵️" : "أنت من الحلفاء 🛡️";
+  $("role-value").style.color = spy ? "var(--stamp)" : "#2A6B43";
+  if(spy){
+    var mates = [];
+    for(var i=0;i<spies.length;i++){
+      if(spies[i] !== revealIndex) mates.push(players[spies[i]]);
+    }
+    $("role-extra").textContent = "زملاؤك الجواسيس: " + mates.join("، ");
+    $("role-tip").textContent = "مهمتكم إفشال ٣ مهمات دون أن تنكشفوا. تخفَّ جيداً واكسب ثقتهم!";
+  } else {
+    $("role-extra").textContent = "";
+    $("role-tip").textContent = "لا تعرف هوية أحد. مهمتكم إنجاح ٣ مهمات وكشف الجواسيس المندسين بينكم.";
+  }
+  $("reveal-pass").classList.add("hidden");
+  $("reveal-role").classList.remove("hidden");
+}
+
+function hideRole(){
+  revealIndex++;
+  if(revealIndex >= players.length) showBoard();
+  else showRevealPass();
+}
+
+/* ====================== لوحة المهمات ====================== */
+function showBoard(){
+  var track = "", sizes = "";
+  for(var i=0;i<5;i++){
+    var cls = "mission-dot";
+    if(missions[i] === true) cls += " success";
+    else if(missions[i] === false) cls += " fail";
+    else if(i === currentMission) cls += " current";
+    var icon = missions[i] === true ? "✔" : (missions[i] === false ? "✘" : toAr(i+1));
+    track += '<div class="' + cls + '">' + icon + '</div>';
+    sizes += '<span>' + toAr(TEAM_SIZES[players.length][i]) + ' لاعبين</span>';
+  }
+  $("missions-track").innerHTML = track;
+  $("missions-sizes").innerHTML = sizes;
+
+  $("board-leader").textContent = players[leaderIndex];
+  $("board-mission-num").textContent = toAr(currentMission+1);
+  $("board-team-size").textContent = toAr(teamSize()) + " لاعبين";
+  $("board-rejections").textContent = toAr(rejections);
+  if(failsNeeded() === 2) $("board-two-fails").classList.remove("hidden");
+  else $("board-two-fails").classList.add("hidden");
+
+  go("screen-board");
+}
+
+/* ====================== ترشيح الفريق ====================== */
+function openPropose(){
+  proposedTeam = [];
+  $("propose-leader").textContent = players[leaderIndex];
+  $("propose-size").textContent = toAr(teamSize()) + " لاعبين";
+  var html = "";
+  for(var i=0;i<players.length;i++){
+    html += '<button class="select-btn" data-pick="' + i + '">' +
+            '<span>' + escapeHtml(players[i]) + (i === leaderIndex ? ' 👑' : '') + '</span>' +
+            '<span class="pick-mark"></span></button>';
+  }
+  $("propose-list").innerHTML = html;
+  updateProposeUI();
+  go("screen-propose");
+}
+
+function togglePick(i){
+  var pos = proposedTeam.indexOf(i);
+  if(pos !== -1) proposedTeam.splice(pos,1);
+  else if(proposedTeam.length < teamSize()) proposedTeam.push(i);
+  updateProposeUI();
+}
+
+function updateProposeUI(){
+  var btns = $("propose-list").querySelectorAll(".select-btn");
+  for(var k=0;k<btns.length;k++){
+    var i = parseInt(btns[k].dataset.pick,10);
+    var sel = proposedTeam.indexOf(i) !== -1;
+    btns[k].classList.toggle("selected", sel);
+    btns[k].querySelector(".pick-mark").textContent = sel ? "✔" : "";
+  }
+  $("propose-count").textContent = "تم اختيار " + toAr(proposedTeam.length) + " من " + toAr(teamSize());
+  $("confirm-team-btn").disabled = proposedTeam.length !== teamSize();
+}
+
+function confirmTeam(){
+  var names = [];
+  for(var i=0;i<proposedTeam.length;i++) names.push(players[proposedTeam[i]]);
+  $("vote-team").textContent = names.join(" — ");
+  $("vote-warning").textContent = rejections === 4
+    ? "⚠ تحذير أخير: إن رُفض هذا الترشيح يفوز الجواسيس فوراً!" : "";
+  go("screen-vote");
+}
+
+/* ====================== نتيجة التصويت ====================== */
+function voteApproved(){
+  rejections = 0;
+  missionTurn = 0;
+  missionCards = [];
+  showMissionPass();
+  go("screen-mission");
+}
+
+function voteRejected(){
+  rejections++;
+  if(rejections >= 5){ endGame(false, "رُفضت ٥ ترشيحات متتالية — انهارت الثقة بين الحلفاء!"); return; }
+  leaderIndex = (leaderIndex + 1) % players.length;
+  showBoard();
+}
+
+/* ====================== تنفيذ المهمة ====================== */
+function showMissionPass(){
+  $("mission-num-label").textContent = toAr(currentMission+1);
+  $("mission-progress").textContent = "العضو " + toAr(missionTurn+1) + " من " + toAr(proposedTeam.length);
+  $("mission-player-name").textContent = players[proposedTeam[missionTurn]];
+  $("mission-pass").classList.remove("hidden");
+  $("mission-choice").classList.add("hidden");
+  $("mission-done").classList.add("hidden");
+  $("mission-choice-warn").textContent = "";
+}
+
+function showMissionChoice(){
+  $("mission-pass").classList.add("hidden");
+  $("mission-choice").classList.remove("hidden");
+}
+
+function playCard(success){
+  var playerIdx = proposedTeam[missionTurn];
+  if(!success && !isSpy(playerIdx)){
+    $("mission-choice-warn").textContent = "🛡️ أنت من الحلفاء — لا يمكنك إلا اختيار «نجاح»!";
+    return;
+  }
+  missionCards.push(success);
+  $("mission-choice").classList.add("hidden");
+  $("mission-done").classList.remove("hidden");
+}
+
+function nextMissionPlayer(){
+  missionTurn++;
+  if(missionTurn >= proposedTeam.length) resolveMission();
+  else showMissionPass();
+}
+
+function resolveMission(){
+  var fails = 0;
+  for(var i=0;i<missionCards.length;i++) if(!missionCards[i]) fails++;
+  var success = fails < failsNeeded();
+  missions[currentMission] = success;
+
+  $("result-mission-num").textContent = toAr(currentMission+1);
+  $("mission-outcome").textContent = success ? "نجحت المهمة! 🛡️" : "فشلت المهمة! 💥";
+  $("mission-outcome").style.color = success ? "#2A6B43" : "var(--stamp)";
+  $("result-stamp").textContent = success ? "مهمة ناجحة" : "مهمة فاشلة";
+  $("count-success").textContent = toAr(missionCards.length - fails);
+  $("count-fail").textContent = toAr(fails);
+  go("screen-mission-result");
+}
+
+function continueAfterMission(){
+  var wins = 0, losses = 0;
+  for(var i=0;i<5;i++){
+    if(missions[i] === true) wins++;
+    if(missions[i] === false) losses++;
+  }
+  if(wins >= 3){ endGame(true, "أنجح الحلفاء ٣ مهمات رغم كل محاولات التخريب."); return; }
+  if(losses >= 3){ endGame(false, "أفشل الجواسيس ٣ مهمات من الداخل دون أن يُكشفوا."); return; }
+  currentMission++;
+  leaderIndex = (leaderIndex + 1) % players.length;
+  showBoard();
+}
+
+/* ====================== نهاية اللعبة ====================== */
+function endGame(alliesWon, reason){
+  gameActive = false;
+  $("winner-text").textContent = alliesWon ? "انتصر الحلفاء! 🛡️" : "انتصر الجواسيس! 🕵️";
+  $("winner-text").style.color = alliesWon ? "#2A6B43" : "var(--stamp)";
+  $("winner-reason").textContent = reason;
+  var names = [];
+  for(var i=0;i<spies.length;i++) names.push(players[spies[i]]);
+  $("spies-reveal").textContent = names.join("، ");
+  go("screen-gameover");
+}
+
+/* ====================== ربط الأحداث ====================== */
+document.addEventListener("click", function(e){
+  var t = e.target.closest ? e.target.closest("button") : e.target;
+  if(!t || t.tagName !== "BUTTON") return;
+
+  if(t.dataset.go){ go(t.dataset.go); return; }
+  if(t.dataset.del !== undefined && t.dataset.del !== ""){ removePlayer(parseInt(t.dataset.del,10)); return; }
+  if(t.dataset.pick !== undefined && t.dataset.pick !== ""){ togglePick(parseInt(t.dataset.pick,10)); return; }
+
+  switch(t.id){
+    case "add-btn":          addPlayer(); break;
+    case "start-btn":        startGame(); break;
+    case "show-role-btn":    showRole(); break;
+    case "hide-role-btn":    hideRole(); break;
+    case "propose-btn":      openPropose(); break;
+    case "confirm-team-btn": confirmTeam(); break;
+    case "vote-yes-btn":     voteApproved(); break;
+    case "vote-no-btn":      voteRejected(); break;
+    case "mission-show-btn": showMissionChoice(); break;
+    case "card-success-btn": playCard(true); break;
+    case "card-fail-btn":    playCard(false); break;
+    case "mission-next-btn": nextMissionPlayer(); break;
+    case "continue-btn":     continueAfterMission(); break;
+    case "rematch-btn":      startGame(); break;
+  }
+});
+
+$("player-input").addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ e.preventDefault(); addPlayer(); }
+});
+
+renderPlayers();
+</script>
+</body>
+</html>
